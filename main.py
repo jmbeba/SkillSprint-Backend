@@ -1,5 +1,8 @@
-from fastapi import FastAPI
-from schemas import Course
+from fastapi import FastAPI, Depends
+from schemas import CourseSchema
+from models import Course
+from sqlalchemy.orm import Session
+from database import get_db
 
 app = FastAPI()
 
@@ -11,8 +14,9 @@ def index():
   
 #Gets all courses    
 @app.get('/courses')
-def courses():
-    return []
+def courses(db: Session = Depends(get_db)):
+    events = db.query(Course).all()
+    return events
 
 #Get a single course
 @app.get('/courses/{course_id}')
@@ -21,7 +25,7 @@ def course():
     
 #Post a course    
 @app.post('/courses')
-def create_course(course: Course):
+def create_course(course: CourseSchema):
     print(course)
     return {
         "message":"Course created successfully"
