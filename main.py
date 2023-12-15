@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status, Response
 from schemas import CourseSchema
 from models import Course
 from sqlalchemy.orm import Session
@@ -20,15 +20,20 @@ def courses(db: Session = Depends(get_db)):
 
 #Get a single course
 @app.get('/courses/{course_id}')
-def course():
-    return {}    
+def course(course_id:int, db:Session = Depends(get_db)):
+    course = db.query(Course).filter(course_id == Course.id).first()
+    return course    
     
 #Post a course    
 @app.post('/courses')
-def create_course(course: CourseSchema):
-    print(course)
+def create_course(course: CourseSchema, db: Session = Depends(get_db)):
+    new_course = Course(**course.model_dump())
+    db.add(new_course)
+    db.commit()
+    db.refresh(new_course)
     return {
-        "message":"Course created successfully"
+        "message":"Course created successfully",
+        "course":new_course
     }
     
 #Update a course    
@@ -38,5 +43,13 @@ def update_course(course_id:int):
 
 #Delete a course
 @app.delete('/courses/{course_id}')
-def delete_course(course_id:int):
-    return {"message":f"Course {course_id} deleted successfully"}
+def delete_course(course_id:int, db:Session = Depends(get_db)):
+    delete_course = db.query(Course).filter(Course.id == course_id).first()
+    
+    if delete_course == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Course {course_id} does not exist")
+    else:
+        db.delete(delete_course)
+        db.commit()
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
