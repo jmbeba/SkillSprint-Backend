@@ -7,3 +7,7 @@ class CourseSchema(BaseModel):
     category:str
     start_date:str
     end_date:str
+    
+class UserSchema(BaseModel):
+    name:str
+    phone:str
