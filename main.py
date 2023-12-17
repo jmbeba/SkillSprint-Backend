@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Response
 from schemas import CourseSchema, EnrollmentSchema
 from models import Course, User, Enrollment
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,7 +32,7 @@ def courses(db: Session = Depends(get_db)):
 #Get a single course
 @app.get('/courses/{course_id}')
 def course(course_id:int, db:Session = Depends(get_db)):
-    course = db.query(Course).filter(course_id == Course.id).first()
+    course = db.query(Course).options(joinedload(Course.students)).filter(course_id == Course.id).first()
     return course    
     
 #Post a course    
@@ -69,6 +69,8 @@ def delete_course(course_id:int, db:Session = Depends(get_db)):
 def add_enrollment(enrollment: EnrollmentSchema, db:Session = Depends(get_db)):
     user = db.query(User).filter(User.phone == enrollment.phone).first()
     
+    print(user)
+    
     if user == None:
         user = User(name=enrollment.name, phone=enrollment.phone)
         db.add(user)
@@ -79,7 +81,8 @@ def add_enrollment(enrollment: EnrollmentSchema, db:Session = Depends(get_db)):
         db.add(new_enrollment)
         db.commit()
     else:
-        enrollment_exists = db.query(Enrollment).filter(Enrollment.user_id == user.id , Enrollment.course_id == enrollment.course_id)
+        enrollment_exists = db.query(Enrollment).filter(Enrollment.user_id == user.id , Enrollment.course_id == enrollment.course_id).first()
+        print(enrollment_exists)
         
         if enrollment_exists == None:
             new_enrollment = Enrollment(enrollment_date=enrollment.enrollment_date, course_id=enrollment.course_id, user_id=user.id)
@@ -92,3 +95,13 @@ def add_enrollment(enrollment: EnrollmentSchema, db:Session = Depends(get_db)):
     return {
         "message":"Enrollment successful"
     }
+    
+@app.get('/users')
+def get_users(db:Session = Depends(get_db)):
+    users = db.query(User).all()
+    return users
+
+@app.get('/users/{user_id}')
+def get_user(user_id:int, db:Session = Depends(get_db)):
+    user = db.query(User).options(joinedload(User.enrolled)).filter(User.id == user_id).first()
+    return user
