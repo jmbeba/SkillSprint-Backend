@@ -1,10 +1,21 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Response
-from schemas import CourseSchema
-from models import Course
+from schemas import CourseSchema, EnrollmentSchema
+from models import Course, User, Enrollment
 from sqlalchemy.orm import Session
 from database import get_db
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = ["http://localhost:5173"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*']
+)
 
 @app.get('/')
 def index():
@@ -53,3 +64,31 @@ def delete_course(course_id:int, db:Session = Depends(get_db)):
         db.commit()
     
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.post('/enrollments')
+def add_enrollment(enrollment: EnrollmentSchema, db:Session = Depends(get_db)):
+    user = db.query(User).filter(User.phone == enrollment.phone).first()
+    
+    if user == None:
+        user = User(name=enrollment.name, phone=enrollment.phone)
+        db.add(user)
+        db.commit()
+        
+        new_enrollment = Enrollment(enrollment_date=enrollment.enrollment_date, course_id=enrollment.course_id, user_id=user.id)
+        
+        db.add(new_enrollment)
+        db.commit()
+    else:
+        enrollment_exists = db.query(Enrollment).filter(Enrollment.user_id == user.id , Enrollment.course_id == enrollment.course_id)
+        
+        if enrollment_exists == None:
+            new_enrollment = Enrollment(enrollment_date=enrollment.enrollment_date, course_id=enrollment.course_id, user_id=user.id)
+        
+            db.add(new_enrollment)
+            db.commit()
+        else:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Course already enrolled")
+    
+    return {
+        "message":"Enrollment successful"
+    }
