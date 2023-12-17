@@ -1,0 +1,14 @@
+{
+  "sqltools.connections": [
+    {
+      "pgOptions": {
+        "ssl": true
+      },
+      "previewLimit": 50,
+      "server": "localhost",
+      "driver": "PostgreSQL",
+      "name": "Courses",
+      "connectString": "postgres://admin:3GK08xRudmfFXDwefip2zIEyUB99sfQE@dpg-clud5fed3nmc73a9p4k0-a.oregon-postgres.render.com/courses_99l8"
+    }
+  ]
+}
