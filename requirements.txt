@@ -1,0 +1,5 @@
+fastapi
+uvicorn[standard]
+alembic
+python-dotenv
+faker

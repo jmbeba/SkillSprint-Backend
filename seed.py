@@ -34,8 +34,8 @@ for _ in range(20):
     course_title = f"{random.choice(course_prefixes)} {subject} {random.choice(course_suffixes)}"
     
     description = [
-        f"This course covers the fundamentals of {course_title}",
-        f"Explore the evolving landscape of {course_title}",
+        f"This course covers the fundamentals of {course_title}.",
+        f"Explore the evolving landscape of {course_title}.",
         "Discover effective tools businesses use to thrive in the digital era."
     ]
     
